@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Kubernetes Service (AKS) - The Ultimate Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0078D4;
+            --secondary: #00BCF2;
+            --accent: #50E6FF;
+            --dark: #0F1419;
+            --darker: #0A0E13;
+            --text: #E4E6EB;
+            --text-muted: #B0B3B8;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --gradient-6: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 120, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(80, 230, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(0, 188, 242, 0.06) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 120, 212, 0.15), transparent);
+            border-radius: 50%;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            max-width: 1200px;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+            animation: slideDown 0.8s ease-out;
+            letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.3rem, 3vw, 2rem);
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            animation: slideUp 0.8s ease-out 0.2s both;
+            font-weight: 300;
+        }
+
+        .hero-description {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--text);
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            animation: slideUp 0.8s ease-out 0.4s both;
+            line-height: 1.8;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section {
+            margin-bottom: 6rem;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            display: inline-block;
+            font-weight: 800;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient-3);
+            border-radius: 3px;
+        }
+
+        .section-description {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            line-height: 2;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border-radius: 25px;
+            padding: 3rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-3);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .card:hover {
+            transform: translateY(-15px) scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 25px 70px rgba(80, 230, 255, 0.25);
+        }
+
+        .card:hover::before {
+            opacity: 0.08;
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+            filter: drop-shadow(0 5px 15px rgba(80, 230, 255, 0.3));
+        }
+
+        .card-title {
+            font-size: 1.7rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .card-text {
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .feature-box {
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.08), rgba(80, 230, 255, 0.04));
+            border-left: 5px solid var(--primary);
+            padding: 2.5rem;
+            margin: 2rem 0;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--gradient-3);
+            transition: width 0.3s ease;
+        }
+
+        .feature-box:hover {
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.12), rgba(80, 230, 255, 0.06));
+            transform: translateX(15px);
+        }
+
+        .feature-box:hover::before {
+            width: 100%;
+            opacity: 0.05;
+        }
+
+        .feature-title {
+            font-size: 1.6rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .feature-box p {
+            margin: 0.8rem 0;
+            font-size: 1.05rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 3rem 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.8rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .comparison-table th {
+            background: var(--gradient-1);
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .comparison-table td {
+            font-size: 1.05rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin: 3rem 0;
+            justify-content: center;
+        }
+
+        .tech-badge {
+            background: var(--gradient-4);
+            color: var(--darker);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+            box-shadow: 0 5px 20px rgba(67, 233, 123, 0.3);
+        }
+
+        .tech-badge:hover {
+            transform: scale(1.15) rotate(3deg);
+            box-shadow: 0 15px 40px rgba(67, 233, 123, 0.5);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.12), rgba(80, 230, 255, 0.08));
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(80, 230, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 15s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .info-box-title {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-box p {
+            position: relative;
+            z-index: 1;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin: 0.8rem 0;
+        }
+
+        .subsection-title {
+            font-size: 2.2rem;
+            color: var(--secondary);
+            margin: 4rem 0 2rem;
+            font-weight: 700;
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .subsection-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 100%;
+            background: var(--gradient-3);
+            border-radius: 4px;
+        }
+
+        .workflow-container {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step:hover {
+            transform: translateX(10px);
+            border-left-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .workflow-icon {
+            font-size: 3rem;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .workflow-content h4 {
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-box {
+            background: var(--gradient-1);
+            border-radius: 30px;
+            padding: 4rem;
+            text-align: center;
+            margin: 5rem 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-text {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(80, 230, 255, 0.25), rgba(0, 188, 242, 0.15));
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            color: var(--accent);
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(80, 230, 255, 0.2);
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .scroll-progress {
+            height: 100%;
+            background: var(--gradient-3);
+            width: 0%;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-step {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <div class="scroll-indicator">
+        <div class="scroll-progress" id="scrollProgress"></div>
+    </div>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Azure Kubernetes Service</h1>
+            <p class="hero-subtitle">The World's Most Advanced Container Orchestration Platform</p>
+            <p class="hero-description">
+                Empowering enterprises worldwide to deploy, scale, and manage containerized applications with unprecedented efficiency, security, and reliability. Welcome to the future of cloud-native computing.
+            </p>
+            <div class="tech-stack">
+                <span class="tech-badge">🚀 Kubernetes</span>
+                <span class="tech-badge">☁️ Azure Cloud</span>
+                <span class="tech-badge">🐳 Docker</span>
+                <span class="tech-badge">🔒 Enterprise Security</span>
+                <span class="tech-badge">⚡ Auto-Scaling</span>
+                <span class="tech-badge">🌍 Global Deployment</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        
+        <section class="section">
+            <h2 class="section-title">🎯 What is Kubernetes</h2>
+            <p class="section-description">
+                <span class="highlight">Kubernetes</span> (K8s) is an open-source container orchestration platform that automates deployment, scaling, and management of containerized applications. Think of it as the operating system for your cloud infrastructure.
+            </p>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Container Orchestration</h3>
+                    <p class="card-text">Automatically deploy, scale, and manage thousands of containers across hundreds of servers.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🏥</span>
+                    <h3 class="card-title">Self-Healing</h3>
+                    <p class="card-text">Automatically restart failed containers and replace unhealthy nodes without manual intervention.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📈</span>
+                    <h3 class="card-title">Auto-Scaling</h3>
+                    <p class="card-text">Scale applications up or down based on demand, handling traffic spikes effortlessly.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🎯</span>
+                    <h3 class="card-title">Declarative Config</h3>
+                    <p class="card-text">Define desired state in YAML files, Kubernetes makes it reality automatically.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">☁️ What is AKS?</h2>
+            <p class="section-description">
+                <span class="highlight">Azure Kubernetes Service (AKS)</span> is Microsoft's fully managed Kubernetes service. The control plane is FREE, and Microsoft handles all operational complexity.
+            </p>
+
+            <div class="info-box">
+                <h3 class="info-box-title">💡 The AKS Game Changer</h3>
+                <p>
+                    AKS control plane is completely FREE. Microsoft manages patching, upgrading, monitoring, and optimizing 24/7 at zero cost.
+                </p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">💰</span>
+                    <h3 class="card-title">Free Control Plane</h3>
+                    <p class="card-text">Save $43,800+ annually with 50 clusters compared to AWS EKS.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Automated Operations</h3>
+                    <p class="card-text">Automatic upgrades, security patching, and monitoring with zero overhead.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🚀</span>
+                    <h3 class="card-title">AKS Automatic</h3>
+                    <p class="card-text">Production-ready clusters in minutes with zero configuration.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🌍</span>
+                    <h3 class="card-title">Global Reach</h3>
+                    <p class="card-text">Deploy across 60+ Azure regions worldwide for global applications.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🐳 Docker + Kubernetes + AKS</h2>
+            <p class="section-description">
+                <span class="highlight">Docker</span> packages applications into containers. Kubernetes orchestrates them. AKS manages everything.
+            </p>
+
+            <div class="workflow-container">
+                <div class="workflow-step">
+                    <div class="workflow-icon">📝</div>
+                    <div class="workflow-content">
+                        <h4>Step 1: Create Application</h4>
+                        <p>Developer writes code and Dockerfile defining the environment.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">🏗️</div>
+                    <div class="workflow-content">
+                        <h4>Step 2: Build Image</h4>
+                        <p>Docker builds immutable container image with all dependencies.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">🗄️</div>
+                    <div class="workflow-content">
+                        <h4>Step 3: Push to Registry</h4>
+                        <p>Image pushed to Azure Container Registry with security scanning.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">☸️</div>
+                    <div class="workflow-content">
+                        <h4>Step 4: Deploy to AKS</h4>
+                        <p>Kubernetes deploys containers with load balancing and health checks.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">🚀</div>
+                    <div class="workflow-content">
+                        <h4>Step 5: Production Scale</h4>
+                        <p>Auto-scaling, self-healing, rolling updates, zero-downtime.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🚀 Why Companies Choose AKS</h2>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">⏱️</span>
+                    <h3 class="card-title">10x Faster Deployment</h3>
+                    <p class="card-text">From weeks to hours. Netflix deploys 4,000+ times daily.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">💰</span>
+                    <h3 class="card-title">50-70% Cost Savings</h3>
+                    <p class="card-text">Optimized resource utilization and automatic scaling.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🌍</span>
+                    <h3 class="card-title">Global Scale</h3>
+                    <p class="card-text">Deploy in 60+ regions with consistent low latency.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🛡️</span>
+                    <h3 class="card-title">99.95% Uptime</h3>
+                    <p class="card-text">Self-healing and automatic failover ensure availability.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3 class="info-box-title">📈 Success Stories</h3>
+                <p><strong>ASOS:</strong> Deployment time from 4 hours to 15 minutes</p>
+                <p><strong>H&M:</strong> 1M+ daily transactions, 99.99% uptime</p>
+                <p><strong>Maersk:</strong> 60% infrastructure cost reduction</p>
+                <p><strong>The Guardian:</strong> Auto-scaled 100x traffic without downtime</p>
+            </div>
+        </section>
+
+        <section class="section">
+
+            <div class="cta-box">
+                <h3 class="cta-title">🎯 The AKS Advantage</h3>
+                <p class="cta-text">
+                    Free control plane + fastest setup + automatic operations + deepest Azure integration = Unmatched value
+                </p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔐 Enterprise Security</h2>
+            
+            <div class="feature-box">
+                <h3 class="feature-title">Built-in Security Features</h3>
+                <p>• Azure AD integration for authentication and RBAC</p>
+                <p>• Network policies for microsegmentation</p>
+                <p>• Private clusters with no public endpoints</p>
+                <p>• Microsoft Defender for real-time threat detection</p>
+                <p>• Automatic vulnerability scanning and patching</p>
+                <p>• Azure Key Vault integration for secrets</p>
+                <p>• Compliance: ISO, SOC, HIPAA, PCI-DSS certified</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🏗️ AKS Architecture</h2>
+            
+            <div class="feature-box">
+                <h3 class="feature-title">☁️ Control Plane (Managed by Microsoft - FREE)</h3>
+                <p><strong>API Server:</strong> Front-end to Kubernetes. All kubectl commands go through here.</p>
+                <p><strong>etcd:</strong> Distributed key-value store holding all cluster data.</p>
+                <p><strong>Scheduler:</strong> Assigns new pods to nodes based on resources.</p>
+                <p><strong>Controller Manager:</strong> Ensures desired state matches actual state.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">🖥️ Worker Nodes (You Manage)</h3>
+                <p><strong>Node Pools:</strong> Groups of identical VMs for different workloads.</p>
+                <p><strong>Kubelet:</strong> Agent ensuring containers run as specified.</p>
+                <p><strong>Container Runtime:</strong> Runs containers (containerd by default).</p>
+                <p><strong>Kube-proxy:</strong> Maintains network rules for pod communication.</p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">📦</span>
+                    <h3 class="card-title">Pods</h3>
+                    <p class="card-text">Smallest deployable units containing one or more containers.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Deployments</h3>
+                    <p class="card-text">Manage pod replicas with rolling updates and rollbacks.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🌐</span>
+                    <h3 class="card-title">Services</h3>
+                    <p class="card-text">Stable network endpoints with load balancing across pods.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">💾</span>
+                    <h3 class="card-title">Persistent Volumes</h3>
+                    <p class="card-text">Durable storage backed by Azure Disks or Files.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🌐 Networking Solutions</h2>
+            
+            <div class="feature-box">
+                <h3 class="feature-title">🔵 Azure CNI</h3>
+                <p>Every pod gets IP from VNet subnet. Direct communication with Azure resources.</p>
+                <p><strong>Use when:</strong> Need VNet integration and network policies.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">🟢 Kubenet</h3>
+                <p>Pods use private IPs with NAT. More IP efficient.</p>
+                <p><strong>Use when:</strong> IP constraints or smaller clusters.</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">🟣 Azure CNI Overlay</h3>
+                <p>Best of both: network policies with IP efficiency.</p>
+                <p><strong>Use when:</strong> Need policies but limited IP space.</p>
+            </div>
+
+            <h3 class="subsection-title">🔵 NGINX Ingress Controller</h3>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🚦</span>
+                    <h3 class="card-title">Intelligent Routing</h3>
+                    <p class="card-text">Route by hostname, path, headers. Multiple apps on one IP.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔒</span>
+                    <h3 class="card-title">SSL/TLS Automation</h3>
+                    <p class="card-text">Free Let's Encrypt certificates with auto-renewal.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">⚖️</span>
+                    <h3 class="card-title">Load Balancing</h3>
+                    <p class="card-text">Round-robin, least connections, IP hash algorithms.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🛡️</span>
+                    <h3 class="card-title">Security</h3>
+                    <p class="card-text">Rate limiting, IP filtering, authentication, CORS.</p>
+                </div>
+            </div>
+
+            <h3 class="subsection-title">🦍 Kong API Gateway</h3>
+            
+            <div class="info-box">
+                <h3 class="info-box-title">What is Kong?</h3>
+                <p>
+                    Enterprise API gateway with authentication, rate limiting, analytics, and transformations. Perfect for API-first architectures.
+                </p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🔑</span>
+                    <h3 class="card-title">Advanced Auth</h3>
+                    <p class="card-text">OAuth 2.0, JWT, API keys, LDAP, OpenID Connect.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📊</span>
+                    <h3 class="card-title">API Analytics</h3>
+                    <p class="card-text">Real-time monitoring of calls, latency, error rates.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Transformations</h3>
+                    <p class="card-text">Modify requests/responses without changing code.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔌</span>
+                    <h3 class="card-title">50+ Plugins</h3>
+                    <p class="card-text">Caching, correlation IDs, bot detection, custom functions.</p>
+                </div>
+            </div>
+
+            <h3 class="subsection-title">🕸️ Istio Service Mesh</h3>
+            
+            <div class="info-box">
+                <h3 class="info-box-title">What is Istio?</h3>
+                <p>
+                    Service mesh providing advanced traffic management, security, and observability for microservices. Manages service-to-service communication without code changes.
+                </p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🔐</span>
+                    <h3 class="card-title">Mutual TLS</h3>
+                    <p class="card-text">Automatic encryption of all service communication.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🎯</span>
+                    <h3 class="card-title">Traffic Control</h3>
+                    <p class="card-text">Canary deployments, A/B testing, traffic mirroring.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📈</span>
+                    <h3 class="card-title">Observability</h3>
+                    <p class="card-text">Distributed tracing with Jaeger, metrics, service graphs.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">Resilience</h3>
+                    <p class="card-text">Automatic retries, timeouts, circuit breakers.</p>
+                </div>
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>NGINX</th>
+                        <th>Kong</th>
+                        <th>Istio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Purpose</strong></td>
+                        <td>External traffic</td>
+                        <td>API management</td>
+                        <td>Service-to-service</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Complexity</strong></td>
+                        <td>Low</td>
+                        <td>Medium</td>
+                        <td>High</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Best For</strong></td>
+                        <td>Web apps</td>
+                        <td>API-first</td>
+                        <td>20+ microservices</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Learning Curve</strong></td>
+                        <td>1-2 days</td>
+                        <td>1-2 weeks</td>
+                        <td>1-2 months</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">💾 Storage Solutions</h2>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">📀</span>
+                    <h3 class="card-title">Azure Disks</h3>
+                    <p class="card-text">For databases and single-pod apps. Premium SSD, Standard SSD, Standard HDD.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📂</span>
+                    <h3 class="card-title">Azure Files</h3>
+                    <p class="card-text">Shared storage for multiple pods. SMB and NFS protocols.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🗃️</span>
+                    <h3 class="card-title">Azure Blob</h3>
+                    <p class="card-text">Object storage for unstructured data, ML datasets, backups.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">⚡</span>
+                    <h3 class="card-title">Azure NetApp Files</h3>
+                    <p class="card-text">Ultra-low latency for enterprise workloads, SAP HANA.</p>
+                </div>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">💡 Storage Best Practices</h3>
+                <p>• Use Premium SSD for databases requiring high IOPS</p>
+                <p>• Enable Volume Snapshots for backup and disaster recovery</p>
+                <p>• Implement dynamic provisioning for automatic volume creation</p>
+                <p>• Set appropriate reclaim policies: Retain or Delete</p>
+                <p>• Use storage classes for different performance tiers</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📊 Monitoring & Observability</h2>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">📈</span>
+                    <h3 class="card-title">Container Insights</h3>
+                    <p class="card-text">Built-in monitoring for clusters, nodes, pods. CPU/memory metrics.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📝</span>
+                    <h3 class="card-title">Log Analytics</h3>
+                    <p class="card-text">Centralized logging with KQL queries. 30-day retention.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🚨</span>
+                    <h3 class="card-title">Azure Monitor Alerts</h3>
+                    <p class="card-text">Metric and log-based alerts with email, SMS, webhooks.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔍</span>
+                    <h3 class="card-title">Application Insights</h3>
+                    <p class="card-text">End-to-end APM with distributed tracing and dependency maps.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🚀 Advanced Features</h2>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🤖</span>
+                    <h3 class="card-title">Virtual Nodes</h3>
+                    <p class="card-text">Burst to Azure Container Instances for unlimited scale.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔑</span>
+                    <h3 class="card-title">Workload Identity</h3>
+                    <p class="card-text">Pods authenticate to Azure using managed identities.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔒</span>
+                    <h3 class="card-title">Key Vault Integration</h3>
+                    <p class="card-text">Auto-inject secrets from Key Vault with rotation.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📡</span>
+                    <h3 class="card-title">KEDA Autoscaling</h3>
+                    <p class="card-text">Scale based on events. Scale to zero when idle.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🛡️</span>
+                    <h3 class="card-title">Azure Policy</h3>
+                    <p class="card-text">Enforce governance across all clusters automatically.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔐</span>
+                    <h3 class="card-title">Defender for Containers</h3>
+                    <p class="card-text">Real-time threat detection and vulnerability scanning.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🔄</span>
+                    <h3 class="card-title">GitOps with Flux</h3>
+                    <p class="card-text">Deploy from Git automatically. Git as source of truth.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🧠</span>
+                    <h3 class="card-title">KAITO AI Toolchain</h3>
+                    <p class="card-text">Deploy AI models with automatic GPU allocation.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🌍</span>
+                    <h3 class="card-title">Azure Arc</h3>
+                    <p class="card-text">Manage on-premises and multi-cloud Kubernetes.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">💡 Best Practices</h2>
+            
+            <div class="feature-box">
+                <h3 class="feature-title">🔐 Security Best Practices</h3>
+                <p>• Enable Azure AD integration and RBAC from day one</p>
+                <p>• Use private clusters for production workloads</p>
+                <p>• Implement network policies for microsegmentation</p>
+                <p>• Enable Pod Security Standards (restricted profile)</p>
+                <p>• Use Workload Identity instead of service principals</p>
+                <p>• Enable Microsoft Defender for continuous scanning</p>
+                <p>• Store secrets in Azure Key Vault, not Kubernetes</p>
+                <p>• Enable audit logging for compliance and forensics</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">⚡ Performance Best Practices</h3>
+                <p>• Use node pools for different workload types</p>
+                <p>• Set resource requests and limits on all pods</p>
+                <p>• Implement horizontal pod autoscaling (HPA)</p>
+                <p>• Use cluster autoscaler for dynamic node scaling</p>
+                <p>• Enable Azure CNI Overlay for better IP efficiency</p>
+                <p>• Use Premium SSD for databases and stateful apps</p>
+                <p>• Implement pod disruption budgets for high availability</p>
+                <p>• Use affinity rules for optimal pod placement</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">💰 Cost Optimization</h3>
+                <p>• Use spot instances for batch and fault-tolerant workloads (90% savings)</p>
+                <p>• Enable cluster autoscaler to scale down unused nodes</p>
+                <p>• Use KEDA to scale pods to zero when idle</p>
+                <p>• Implement resource quotas per namespace</p>
+                <p>• Use Reserved Instances for predictable workloads (72% savings)</p>
+                <p>• Monitor with Azure Cost Management + Billing</p>
+                <p>• Right-size node pools based on actual usage</p>
+                <p>• Use burstable VM sizes for variable workloads</p>
+            </div>
+
+            <div class="feature-box">
+                <h3 class="feature-title">🔄 DevOps Best Practices</h3>
+                <p>• Implement GitOps with Flux or ArgoCD</p>
+                <p>• Use Helm charts for application packaging</p>
+                <p>• Implement CI/CD with Azure DevOps or GitHub Actions</p>
+                <p>• Use separate clusters for dev, staging, production</p>
+                <p>• Implement blue-green or canary deployments</p>
+                <p>• Enable automatic image vulnerability scanning</p>
+                <p>• Use namespaces to isolate teams and environments</p>
+                <p>• Implement proper tagging strategy for resources</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📚 Real-World Use Cases</h2>
+            
+            <div class="cards-grid">
+                <div class="card">
+                    <span class="card-icon">🛒</span>
+                    <h3 class="card-title">E-Commerce</h3>
+                    <p class="card-text">Handle Black Friday traffic spikes with auto-scaling. Deploy updates without downtime.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🏦</span>
+                    <h3 class="card-title">Financial Services</h3>
+                    <p class="card-text">Meet compliance requirements with private clusters, network policies, audit logs.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🎮</span>
+                    <h3 class="card-title">Gaming</h3>
+                    <p class="card-text">Deploy game servers globally. Scale based on player count. Low-latency multiplayer.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🏥</span>
+                    <h3 class="card-title">Healthcare</h3>
+                    <p class="card-text">HIPAA-compliant infrastructure. Secure patient data. High availability for critical apps.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">📱</span>
+                    <h3 class="card-title">Mobile Apps</h3>
+                    <p class="card-text">Backend APIs with auto-scaling. Push notifications. Real-time data sync.</p>
+                </div>
+                <div class="card">
+                    <span class="card-icon">🤖</span>
+                    <h3 class="card-title">AI/ML</h3>
+                    <p class="card-text">Train models on GPU nodes. Deploy for inference on CPU. Scale based on demand.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🎓 Getting Started</h2>
+            
+            <div class="workflow-container">
+                <div class="workflow-step">
+                    <div class="workflow-icon">1️⃣</div>
+                    <div class="workflow-content">
+                        <h4>Create AKS Cluster</h4>
+                        <p>Use Azure Portal, CLI, or Terraform. Choose region, node size, and count.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">2️⃣</div>
+                    <div class="workflow-content">
+                        <h4>Connect kubectl</h4>
+                        <p>Get credentials with: az aks get-credentials --resource-group myRG --name myAKS</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">3️⃣</div>
+                    <div class="workflow-content">
+                        <h4>Deploy Application</h4>
+                        <p>Create deployment YAML and apply: kubectl apply -f deployment.yaml</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">4️⃣</div>
+                    <div class="workflow-content">
+                        <h4>Expose Service</h4>
+                        <p>Create service with LoadBalancer type to get public IP address.</p>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="workflow-icon">5️⃣</div>
+                    <div class="workflow-content">
+                        <h4>Monitor & Scale</h4>
+                        <p>Enable Container Insights, set up alerts, implement autoscaling.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cta-box">
+                <h3 class="cta-title">Ready to Transform Your Infrastructure?</h3>
+                <p class="cta-text">
+                    Join thousands of enterprises using AKS to deploy faster, scale smarter, and reduce costs. Start your cloud-native journey today with Azure Kubernetes Service.
+                </p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Scroll progress indicator
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('scrollProgress').style.width = scrolled + '%';
+        });
+    </script>
+</body>
+</html>
